@@ -48,7 +48,7 @@ To follow github project and user.
     packages=find_packages(),
     include_package_data=False,
     install_requires=[
-        'colorama', 'termcolor', 'github3.py'
+        'colorama', 'termcolor', 'github3.py==0.9.3'
     ],
     entry_points={
         'console_scripts': [
