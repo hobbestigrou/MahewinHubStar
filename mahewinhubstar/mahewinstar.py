@@ -17,6 +17,7 @@ class MahewinStar(object):
         self.username = args.username
         self.project = args.project
         self.star = args.star
+        self.watch = args.watch
         self.follow_user = args.follow
         self.all_project = args.all_project
         self._github = login(user, password)
@@ -52,6 +53,13 @@ class MahewinStar(object):
             '-a', '--all', dest='all_project',
             help='To star or watch all project of user', action='store_true')
 
+        parser.add_argument(
+            '-w', '--watch', dest='watch', default=None,
+            help='To watch a project', action='store_true')
+        parser.add_argument(
+            '-b', '--unwatch', dest='watch',
+            help='To unwatch a project', action='store_false')
+
         return parser.parse_args()
 
     @staticmethod
@@ -73,6 +81,12 @@ class MahewinStar(object):
         else:
             self._github.unstar(self.username, repository_name)
 
+    def _subscribe_project(self, repository_name):
+        if self.watch:
+            self._github.subscribe(self.username, repository_name)
+        else:
+            self._github.unsubscribe(self.username, repository_name)
+
     def run(self):
         if not self._github.user(login=self.username):
             print 'The user {username} not found on github'.format(
@@ -92,6 +106,9 @@ class MahewinStar(object):
 
         if self.star is not None:
             self.starred()
+
+        if self.watch is not None:
+            self.subscribe()
 
     def follow(self, is_follow=True):
         user = self._github.user(login=self.username)
@@ -130,3 +147,23 @@ class MahewinStar(object):
                 print colored(star_project, color='grey', on_color='on_yellow')
             else:
                 print star_project
+
+    def subscribe(self):
+        all_project = []
+
+        if self.all_project:
+            for repository in self._github.iter_user_repos(
+                    self.username, type='owner'):
+                if not repository.fork:
+                    self._subscribe_project(repository.name)
+                    all_project.append(repository.name)
+        else:
+            self._subscribe_project(self.project)
+            all_project.append(self.project)
+
+        for watch_project in self._github.iter_subscriptions():
+            if watch_project.name in all_project:
+                print colored(watch_project, color='grey',
+                              on_color='on_yellow')
+            else:
+                print watch_project
